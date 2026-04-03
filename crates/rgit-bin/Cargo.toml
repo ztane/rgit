@@ -1,0 +1,12 @@
+[package]
+name = "rgit-bin"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "cgit"
+path = "src/main.rs"
+
+[dependencies]
+rgit-core = { path = "../rgit-core" }
+rgit-ui = { path = "../rgit-ui" }
