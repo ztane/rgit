@@ -227,6 +227,15 @@ fn process_request(ctx: &mut CgitContext) {
         "tag" => {
             rgit_ui::tag::print_tag(ctx);
         }
+        "HEAD" => {
+            rgit_ui::clone::print_head(ctx);
+        }
+        "info" => {
+            rgit_ui::clone::print_info(ctx);
+        }
+        "objects" => {
+            rgit_ui::clone::print_objects(ctx);
+        }
         "ls_cache" => {
             ctx.page.mimetype = "text/plain".to_string();
             shared::print_http_headers(ctx);

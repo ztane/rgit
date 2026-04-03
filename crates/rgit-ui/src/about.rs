@@ -10,8 +10,15 @@ pub fn print_about(ctx: &mut CgitContext) {
         Some(idx) => idx,
         None => {
             // Site-level about page (root readme)
-            // TODO: implement root readme
+            ctx.page.title = Some(ctx.cfg.root_title.clone());
             print_layout_start(ctx);
+            if let Some(ref root_readme) = ctx.cfg.root_readme.clone() {
+                html("<div id='summary'>");
+                filter::with_filter(ctx.cfg.about_filter.as_deref(), &[root_readme], || {
+                    let _ = html_include(root_readme);
+                });
+                html("</div>");
+            }
             print_layout_end(ctx);
             return;
         }

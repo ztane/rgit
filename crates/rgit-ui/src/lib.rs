@@ -16,3 +16,4 @@ pub mod refs;
 pub mod atom;
 pub mod blob;
 pub mod tag;
+pub mod clone;
