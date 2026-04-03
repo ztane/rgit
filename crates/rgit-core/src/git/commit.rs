@@ -18,16 +18,16 @@ pub struct CommitInfo {
 
 /// Parse a commit from a gix commit object.
 pub fn parse_commit(commit: &gix::objs::CommitRef<'_>, oid: gix::ObjectId) -> CommitInfo {
-    let author = commit.author();
-    let committer = commit.committer();
+    let author = commit.author().ok();
+    let committer = commit.committer().ok();
 
-    let author_name = author.name.to_string();
-    let author_email = format!("<{}>", author.email);
-    let committer_name = committer.name.to_string();
-    let committer_email = format!("<{}>", committer.email);
+    let author_name = author.as_ref().map(|a| a.name.to_string()).unwrap_or_default();
+    let author_email = author.as_ref().map(|a| format!("<{}>", a.email)).unwrap_or_default();
+    let committer_name = committer.as_ref().map(|c| c.name.to_string()).unwrap_or_default();
+    let committer_email = committer.as_ref().map(|c| format!("<{}>", c.email)).unwrap_or_default();
 
-    let author_time = author.time().unwrap_or_default();
-    let committer_time = committer.time().unwrap_or_default();
+    let author_time = author.as_ref().and_then(|a| a.time().ok()).unwrap_or_default();
+    let committer_time = committer.as_ref().and_then(|c| c.time().ok()).unwrap_or_default();
 
     let message = commit.message.to_string();
     let (subject, msg) = match message.find('\n') {

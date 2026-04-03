@@ -54,8 +54,8 @@ pub fn list_tags(repo: &gix::Repository) -> Vec<TagInfo> {
         match object.kind {
             gix::object::Kind::Tag => {
                 let Ok(tag_ref) = object.try_to_tag_ref() else { continue };
-                let tagger_info = tag_ref.tagger;
-                let (tagger, tagger_email, tagger_date, tagger_tz) = match tagger_info {
+                let tagger_sig = tag_ref.tagger().ok().flatten();
+                let (tagger, tagger_email, tagger_date, tagger_tz) = match tagger_sig {
                     Some(sig) => {
                         let time = sig.time().unwrap_or_default();
                         (

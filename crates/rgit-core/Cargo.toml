@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-gix = { version = "0.72", default-features = false, features = ["max-performance-safe"] }
+gix = { version = "0.78", default-features = false, features = ["max-performance-safe"] }
 mlua = { version = "0.10", features = ["lua54", "vendored"] }
