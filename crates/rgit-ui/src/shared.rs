@@ -31,7 +31,7 @@ fn http_date(t: i64) -> String {
     )
 }
 
-fn unix_to_gmt(timestamp: i64) -> (i32, i32, i32, i32, i32, i32, i32) {
+pub fn unix_to_gmt(timestamp: i64) -> (i32, i32, i32, i32, i32, i32, i32) {
     let secs = timestamp % 86400;
     let mut days = timestamp / 86400;
     if secs < 0 {

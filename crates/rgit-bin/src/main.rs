@@ -201,6 +201,21 @@ fn process_request(ctx: &mut CgitContext) {
         "about" => {
             rgit_ui::about::print_about(ctx);
         }
+        "plain" => {
+            rgit_ui::plain::print_plain(ctx);
+        }
+        "refs" => {
+            rgit_ui::refs::print_refs(ctx);
+        }
+        "atom" => {
+            rgit_ui::atom::print_atom(ctx);
+        }
+        "blob" => {
+            rgit_ui::blob::print_blob(ctx);
+        }
+        "tag" => {
+            rgit_ui::tag::print_tag(ctx);
+        }
         "ls_cache" => {
             ctx.page.mimetype = "text/plain".to_string();
             shared::print_http_headers(ctx);

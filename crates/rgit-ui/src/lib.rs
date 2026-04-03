@@ -11,3 +11,8 @@ pub mod snapshot;
 pub mod patch;
 pub mod rawdiff;
 pub mod about;
+pub mod plain;
+pub mod refs;
+pub mod atom;
+pub mod blob;
+pub mod tag;
