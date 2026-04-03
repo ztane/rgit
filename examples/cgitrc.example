@@ -1,0 +1,31 @@
+# Example cgitrc for rgit
+# Copy this to ./cgitrc and edit to match your setup.
+
+# Site title
+root-title=My Git Repositories
+
+# CSS and logo (served from /static/ by serve.py)
+css=/static/cgit.css
+logo=/static/cgit.png
+
+# Show owner column in repo index
+enable-index-owner=1
+
+# Show file/line counts in log
+enable-log-filecount=1
+enable-log-linecount=1
+
+# Snapshot formats offered for tags
+snapshots=tar.gz zip
+
+# Auto-discover repos under a directory:
+# scan-path=/srv/git
+
+# Or list repos explicitly:
+# repo.url=myproject
+# repo.path=/srv/git/myproject.git
+# repo.desc=My awesome project
+# repo.owner=Me
+
+# Clone URL prefix (shown on summary page)
+# clone-prefix=https://git.example.com
