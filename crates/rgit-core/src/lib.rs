@@ -10,3 +10,4 @@ pub mod snapshot;
 pub mod macros;
 pub mod git;
 pub mod cache;
+pub mod filter;

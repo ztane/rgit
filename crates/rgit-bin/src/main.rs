@@ -198,6 +198,9 @@ fn process_request(ctx: &mut CgitContext) {
         "rawdiff" => {
             rgit_ui::rawdiff::print_rawdiff(ctx);
         }
+        "about" => {
+            rgit_ui::about::print_about(ctx);
+        }
         "ls_cache" => {
             ctx.page.mimetype = "text/plain".to_string();
             shared::print_http_headers(ctx);

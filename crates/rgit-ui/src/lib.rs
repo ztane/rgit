@@ -10,3 +10,4 @@ pub mod diff;
 pub mod snapshot;
 pub mod patch;
 pub mod rawdiff;
+pub mod about;

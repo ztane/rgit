@@ -1,5 +1,6 @@
 use rgit_core::context::CgitContext;
 use rgit_core::html::*;
+use rgit_core::filter;
 use rgit_core::git;
 use crate::shared::*;
 use crate::diff::print_diff_body;
@@ -54,12 +55,21 @@ pub fn print_commit(ctx: &mut CgitContext) {
     // Commit info table
     html("<table summary='commit info' class='commit-info'>\n");
 
+    let email_filter = ctx.repolist.repos[repo_idx].email_filter.clone();
+
     // Author
     html("<tr><th>author</th><td>");
-    html_txt(&commit.author);
-    if ctx.cfg.noplainemail == 0 {
-        html(" ");
-        html_txt(&commit.author_email);
+    {
+        let author = commit.author.clone();
+        let author_email = commit.author_email.clone();
+        let noplainemail = ctx.cfg.noplainemail;
+        filter::with_filter(email_filter.as_deref(), &[&author_email, "commit"], || {
+            html_txt(&author);
+            if noplainemail == 0 {
+                html(" ");
+                html_txt(&author_email);
+            }
+        });
     }
     html("</td><td class='right'>");
     html_txt(&format_iso8601_full(commit.author_date, commit.author_tz));
@@ -67,10 +77,17 @@ pub fn print_commit(ctx: &mut CgitContext) {
 
     // Committer
     html("<tr><th>committer</th><td>");
-    html_txt(&commit.committer);
-    if ctx.cfg.noplainemail == 0 {
-        html(" ");
-        html_txt(&commit.committer_email);
+    {
+        let committer = commit.committer.clone();
+        let committer_email = commit.committer_email.clone();
+        let noplainemail = ctx.cfg.noplainemail;
+        filter::with_filter(email_filter.as_deref(), &[&committer_email, "commit"], || {
+            html_txt(&committer);
+            if noplainemail == 0 {
+                html(" ");
+                html_txt(&committer_email);
+            }
+        });
     }
     html("</td><td class='right'>");
     html_txt(&format_iso8601_full(commit.committer_date, commit.committer_tz));
@@ -101,12 +118,24 @@ pub fn print_commit(ctx: &mut CgitContext) {
 
     html("</table>\n");
 
+    let commit_filter = ctx.repolist.repos[repo_idx].commit_filter.clone();
+
     // Subject and message
     html("<div class='commit-subject'>");
-    html_txt(&commit.subject);
+    {
+        let subject = commit.subject.clone();
+        filter::with_filter(commit_filter.as_deref(), &[], || {
+            html_txt(&subject);
+        });
+    }
     html("</div>");
     html("<div class='commit-msg'>");
-    html_txt(&commit.msg);
+    {
+        let msg = commit.msg.clone();
+        filter::with_filter(commit_filter.as_deref(), &[], || {
+            html_txt(&msg);
+        });
+    }
     html("</div>");
 
     // Diff

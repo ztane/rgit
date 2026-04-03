@@ -1,5 +1,6 @@
 use rgit_core::context::CgitContext;
 use rgit_core::html::*;
+use rgit_core::filter;
 use rgit_core::git;
 use crate::shared::*;
 
@@ -117,6 +118,7 @@ fn print_tree_listing(ctx: &mut CgitContext, head: &str, path: Option<&str>, ent
 fn print_blob(ctx: &mut CgitContext, head: &str, path: &str, blob_oid: &str, data: &[u8]) {
     let basename = path.rsplit('/').next().unwrap_or(path);
     let is_binary = data.iter().take(8000).any(|&b| b == 0);
+    let source_filter = ctx.repolist.repos[ctx.repo.unwrap()].source_filter.clone();
 
     ctx.page.title = Some(format!("{} - {}", ctx.cfg.root_title, ctx.repolist.repos[ctx.repo.unwrap()].name));
     print_layout_start(ctx);
@@ -136,13 +138,13 @@ fn print_blob(ctx: &mut CgitContext, head: &str, path: &str, blob_oid: &str, dat
         print_binary_buffer(data);
     } else {
         let text = String::from_utf8_lossy(data);
-        print_text_buffer(basename, &text, ctx.cfg.enable_tree_linenumbers != 0);
+        print_text_buffer(basename, &text, ctx.cfg.enable_tree_linenumbers != 0, source_filter.as_deref());
     }
 
     print_layout_end(ctx);
 }
 
-fn print_text_buffer(_name: &str, text: &str, show_linenumbers: bool) {
+fn print_text_buffer(name: &str, text: &str, show_linenumbers: bool, source_filter: Option<&str>) {
     html("<table summary='blob content' class='blob'>\n");
 
     if show_linenumbers {
@@ -164,9 +166,17 @@ fn print_text_buffer(_name: &str, text: &str, show_linenumbers: bool) {
         html("<tr>\n");
     }
 
-    html("<td class='lines'><pre><code>");
-    html_txt(text);
-    html("</code></pre></td></tr></table>\n");
+    if source_filter.is_some() {
+        html("<td class='lines'><pre><code>");
+        filter::with_filter(source_filter, &[name], || {
+            html_raw(text.as_bytes());
+        });
+        html("</code></pre></td></tr></table>\n");
+    } else {
+        html("<td class='lines'><pre><code>");
+        html_txt(text);
+        html("</code></pre></td></tr></table>\n");
+    }
 }
 
 fn print_binary_buffer(data: &[u8]) {

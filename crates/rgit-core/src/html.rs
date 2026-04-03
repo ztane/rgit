@@ -95,15 +95,17 @@ pub struct HtmlOutput;
 use std::cell::RefCell;
 
 thread_local! {
-    static OUTPUT_BUFFER: RefCell<Option<Vec<u8>>> = const { RefCell::new(None) };
+    /// Stack of capture buffers. When non-empty, output goes to the top buffer.
+    /// Supports nesting (e.g. cache capture + filter capture).
+    static OUTPUT_STACK: RefCell<Vec<Vec<u8>>> = const { RefCell::new(Vec::new()) };
 }
 
 impl HtmlOutput {
     pub fn write_bytes(data: &[u8]) {
-        OUTPUT_BUFFER.with(|buf| {
-            let mut buf = buf.borrow_mut();
-            if let Some(ref mut vec) = *buf {
-                vec.extend_from_slice(data);
+        OUTPUT_STACK.with(|stack| {
+            let mut stack = stack.borrow_mut();
+            if let Some(top) = stack.last_mut() {
+                top.extend_from_slice(data);
             } else {
                 let stdout = io::stdout();
                 let mut handle = stdout.lock();
@@ -117,8 +119,8 @@ impl HtmlOutput {
     }
 
     pub fn flush() {
-        OUTPUT_BUFFER.with(|buf| {
-            if buf.borrow().is_none() {
+        OUTPUT_STACK.with(|stack| {
+            if stack.borrow().is_empty() {
                 let stdout = io::stdout();
                 let mut handle = stdout.lock();
                 handle.flush().expect("flush error on html output");
@@ -126,17 +128,17 @@ impl HtmlOutput {
         });
     }
 
-    /// Start capturing output into a buffer instead of writing to stdout.
+    /// Push a new capture buffer onto the stack.
     pub fn start_capture() {
-        OUTPUT_BUFFER.with(|buf| {
-            *buf.borrow_mut() = Some(Vec::new());
+        OUTPUT_STACK.with(|stack| {
+            stack.borrow_mut().push(Vec::new());
         });
     }
 
-    /// Stop capturing and return the buffered output.
+    /// Pop the top capture buffer and return its contents.
     pub fn stop_capture() -> Vec<u8> {
-        OUTPUT_BUFFER.with(|buf| {
-            buf.borrow_mut().take().unwrap_or_default()
+        OUTPUT_STACK.with(|stack| {
+            stack.borrow_mut().pop().unwrap_or_default()
         })
     }
 }
