@@ -9,3 +9,4 @@ pub mod cmd;
 pub mod snapshot;
 pub mod macros;
 pub mod git;
+pub mod cache;

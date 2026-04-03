@@ -1,7 +1,7 @@
 use rgit_core::context::CgitContext;
+use rgit_core::html::html_raw;
 use rgit_core::git;
 use crate::shared::*;
-use std::io::Write;
 use std::process::Command;
 
 const CGIT_VERSION: &str = "v1.3";
@@ -72,8 +72,6 @@ pub fn print_patch(ctx: &mut CgitContext) {
 
     let output = cmd.output();
     if let Ok(o) = output {
-        let stdout = std::io::stdout();
-        let mut stdout = stdout.lock();
-        let _ = stdout.write_all(&o.stdout);
+        html_raw(&o.stdout);
     }
 }

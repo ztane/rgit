@@ -1,7 +1,7 @@
 use rgit_core::context::CgitContext;
+use rgit_core::html::html_raw;
 use rgit_core::git;
 use crate::shared::*;
-use std::io::Write;
 use std::process::Command;
 
 /// Print the rawdiff page (plain text diff output).
@@ -43,9 +43,6 @@ pub fn print_rawdiff(ctx: &mut CgitContext) {
     ctx.page.mimetype = "text/plain".to_string();
     print_http_headers(ctx);
 
-    let stdout_handle = std::io::stdout();
-    let mut stdout = stdout_handle.lock();
-
     if let Some(ref old) = old_oid {
         // Normal diff between two commits
         let output = Command::new("git")
@@ -54,7 +51,7 @@ pub fn print_rawdiff(ctx: &mut CgitContext) {
             .arg(&format!("{}..{}", old, new_oid))
             .output();
         if let Ok(o) = output {
-            let _ = stdout.write_all(&o.stdout);
+            html_raw(&o.stdout);
         }
     } else {
         // Root commit: use diff-tree
@@ -67,7 +64,7 @@ pub fn print_rawdiff(ctx: &mut CgitContext) {
             .arg(&new_oid)
             .output();
         if let Ok(o) = output {
-            let _ = stdout.write_all(&o.stdout);
+            html_raw(&o.stdout);
         }
     }
 }

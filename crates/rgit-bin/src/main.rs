@@ -91,8 +91,27 @@ fn main() {
         ctx.page.expires += (ttl as i64) * 60;
     }
 
-    // Process the request (no caching in Rust version yet)
-    process_request(&mut ctx);
+    // Disable caching for unauthenticated or HEAD requests (matching C cgit)
+    if !ctx.env.authenticated {
+        ctx.cfg.cache_size = 0;
+    }
+    if let Some(ref method) = ctx.env.request_method {
+        if method == "HEAD" {
+            ctx.cfg.cache_size = 0;
+        }
+    }
+
+    let cache_size = ctx.cfg.cache_size;
+    let cache_root = ctx.cfg.cache_root.clone();
+    let cache_key = ctx.qry.raw.clone();
+
+    rgit_core::cache::cache_process(
+        cache_size,
+        &cache_root,
+        cache_key.as_deref(),
+        ttl,
+        || process_request(&mut ctx),
+    );
 }
 
 fn calc_ttl(ctx: &CgitContext) -> i32 {
@@ -178,6 +197,11 @@ fn process_request(ctx: &mut CgitContext) {
         }
         "rawdiff" => {
             rgit_ui::rawdiff::print_rawdiff(ctx);
+        }
+        "ls_cache" => {
+            ctx.page.mimetype = "text/plain".to_string();
+            shared::print_http_headers(ctx);
+            rgit_core::cache::cache_ls(&ctx.cfg.cache_root);
         }
         _ => {
             shared::print_error_page(

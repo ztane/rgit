@@ -1,7 +1,7 @@
 use rgit_core::context::CgitContext;
+use rgit_core::html::html_raw;
 use rgit_core::snapshot::SNAPSHOT_FORMATS;
 use crate::shared::*;
-use std::io::Write;
 use std::process::{Command, Stdio};
 
 /// Print the snapshot page (serves an archive).
@@ -113,14 +113,10 @@ fn rev_exists(repo_path: &str, rev: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// Write an archive to stdout.
+/// Write an archive via html_raw (supports capture for caching).
 fn write_archive(repo_path: &str, rev: &str, prefix: &str, suffix: &str) {
-    let stdout = std::io::stdout();
-    let mut stdout = stdout.lock();
-
     match suffix {
         ".zip" => {
-            // git archive --format=zip
             let output = Command::new("git")
                 .arg("--git-dir").arg(repo_path)
                 .arg("archive")
@@ -129,7 +125,7 @@ fn write_archive(repo_path: &str, rev: &str, prefix: &str, suffix: &str) {
                 .arg(rev)
                 .output();
             if let Ok(o) = output {
-                let _ = stdout.write_all(&o.stdout);
+                html_raw(&o.stdout);
             }
         }
         ".tar" => {
@@ -141,11 +137,10 @@ fn write_archive(repo_path: &str, rev: &str, prefix: &str, suffix: &str) {
                 .arg(rev)
                 .output();
             if let Ok(o) = output {
-                let _ = stdout.write_all(&o.stdout);
+                html_raw(&o.stdout);
             }
         }
         _ => {
-            // Compressed tar: pipe git archive through compressor
             let compressor = match suffix {
                 ".tar.gz" => vec!["gzip", "-n"],
                 ".tar.bz2" => vec!["bzip2"],
@@ -175,7 +170,7 @@ fn write_archive(repo_path: &str, rev: &str, prefix: &str, suffix: &str) {
                 .output();
 
             if let Ok(o) = compress {
-                let _ = stdout.write_all(&o.stdout);
+                html_raw(&o.stdout);
             }
         }
     }
