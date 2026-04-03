@@ -164,6 +164,12 @@ fn process_request(ctx: &mut CgitContext) {
         "tree" => {
             rgit_ui::tree::print_tree(ctx);
         }
+        "commit" => {
+            rgit_ui::commit::print_commit(ctx);
+        }
+        "diff" => {
+            rgit_ui::diff::print_diff(ctx);
+        }
         _ => {
             shared::print_error_page(
                 ctx,

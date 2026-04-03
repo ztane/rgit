@@ -1,3 +1,5 @@
+use gix::prelude::ObjectIdExt;
+
 /// Information about a commit, extracted from git objects.
 #[derive(Clone, Debug)]
 pub struct CommitInfo {
@@ -61,15 +63,18 @@ pub fn walk_log(
 ) -> Vec<CommitInfo> {
     let mut commits = Vec::new();
 
-    let Ok(reference) = repo.find_reference(head)
+    // Try as reference first, then as OID
+    let commit_id = if let Ok(reference) = repo.find_reference(head)
         .or_else(|_| repo.find_reference(&format!("refs/heads/{}", head)))
-    else {
+    {
+        reference.id().detach()
+    } else if let Ok(oid) = gix::ObjectId::from_hex(head.as_bytes()) {
+        oid
+    } else {
         return commits;
     };
 
-    let commit_id = reference.id();
-
-    let Ok(walk) = commit_id.ancestors().all() else {
+    let Ok(walk) = commit_id.attach(repo).ancestors().all() else {
         return commits;
     };
 

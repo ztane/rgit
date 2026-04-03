@@ -1,6 +1,7 @@
 pub mod commit;
 pub mod refs;
 pub mod tree;
+pub mod diff;
 
 use std::path::Path;
 

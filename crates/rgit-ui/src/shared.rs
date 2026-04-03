@@ -653,6 +653,31 @@ fn format_iso8601(timestamp: i64, _tz: i32) -> String {
     )
 }
 
+/// Format a timestamp as ISO 8601 with the original timezone offset.
+/// The tz parameter is in git's HHMM format (e.g. 100 = +0100, -500 = -0500).
+pub fn format_iso8601_full(timestamp: i64, tz: i32) -> String {
+    // Apply timezone offset to get local time
+    let tz_hours = tz / 100;
+    let tz_mins = tz % 100;
+    let offset_secs = (tz_hours as i64) * 3600 + (tz_mins as i64) * 60;
+    let local_ts = timestamp + offset_secs;
+    let (year, month, day, hour, min, sec, _wday) = unix_to_gmt(local_ts);
+    let sign = if tz >= 0 { '+' } else { '-' };
+    let tz_abs = tz.unsigned_abs();
+    format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02} {}{:02}{:02}",
+        year,
+        month + 1,
+        day,
+        hour,
+        min,
+        sec,
+        sign,
+        tz_abs / 100,
+        tz_abs % 100
+    )
+}
+
 /// Print the version string matching C cgit's --version output.
 pub fn print_version() {
     println!(
