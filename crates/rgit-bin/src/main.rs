@@ -170,6 +170,15 @@ fn process_request(ctx: &mut CgitContext) {
         "diff" => {
             rgit_ui::diff::print_diff(ctx);
         }
+        "snapshot" => {
+            rgit_ui::snapshot::print_snapshot(ctx);
+        }
+        "patch" => {
+            rgit_ui::patch::print_patch(ctx);
+        }
+        "rawdiff" => {
+            rgit_ui::rawdiff::print_rawdiff(ctx);
+        }
         _ => {
             shared::print_error_page(
                 ctx,
