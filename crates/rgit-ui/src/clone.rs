@@ -93,13 +93,25 @@ fn print_pack_info(ctx: &mut CgitContext) {
             let name = entry.file_name();
             let name_str = name.to_string_lossy();
             if name_str.ends_with(".pack") {
-                html(&format!("P {}\n", name_str));
+                html("P ");
+                html_txt(&name_str);
+                html("\n");
             }
         }
     }
 }
 
 fn send_file(ctx: &mut CgitContext, path: &str, repo_path: &str) {
+    // Verify the resolved path stays within the repository directory
+    if let (Ok(canonical), Ok(canonical_repo)) =
+        (std::fs::canonicalize(path), std::fs::canonicalize(repo_path))
+    {
+        if !canonical.starts_with(&canonical_repo) {
+            print_error_page(ctx, 403, "Forbidden", "Forbidden");
+            return;
+        }
+    }
+
     let meta = match std::fs::metadata(path) {
         Ok(m) => m,
         Err(e) => {

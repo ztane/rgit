@@ -92,13 +92,33 @@ where
     // Ensure cache directory exists
     let _ = fs::create_dir_all(path);
 
-    if let Ok(mut f) = fs::File::create(&lock_file) {
-        let _ = f.write_all(key.as_bytes());
-        let _ = f.write_all(&[0]);
-        let _ = f.write_all(&output);
-        let _ = f.flush();
-        // Atomically replace cache file
-        let _ = fs::rename(&lock_file, &cache_file);
+    let lock_result = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&lock_file);
+    match lock_result {
+        Ok(mut f) => {
+            let _ = f.write_all(key.as_bytes());
+            let _ = f.write_all(&[0]);
+            let _ = f.write_all(&output);
+            let _ = f.flush();
+            drop(f);
+            // Atomically replace cache file
+            let _ = fs::rename(&lock_file, &cache_file);
+        }
+        Err(ref e) if e.kind() == io::ErrorKind::AlreadyExists => {
+            // Another process is generating this cache entry; check for stale lock
+            if let Ok(meta) = fs::metadata(&lock_file) {
+                if let Ok(modified) = meta.modified() {
+                    if let Ok(age) = modified.elapsed() {
+                        if age.as_secs() > 120 {
+                            let _ = fs::remove_file(&lock_file);
+                        }
+                    }
+                }
+            }
+        }
+        _ => {}
     }
 
     // Write output to stdout

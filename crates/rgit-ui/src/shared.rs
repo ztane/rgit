@@ -93,13 +93,21 @@ pub fn print_http_headers(ctx: &CgitContext) {
         html(&format!("Status: {} {}\n", status, msg));
     }
 
-    if !ctx.page.mimetype.is_empty() && !ctx.page.charset.is_empty() {
-        html(&format!(
-            "Content-Type: {}; charset={}\n",
-            ctx.page.mimetype, ctx.page.charset
-        ));
-    } else if !ctx.page.mimetype.is_empty() {
-        html(&format!("Content-Type: {}\n", ctx.page.mimetype));
+    if !ctx.page.mimetype.is_empty() {
+        let mimetype: String = ctx.page.mimetype.chars()
+            .filter(|&c| c != '\r' && c != '\n')
+            .collect();
+        if !ctx.page.charset.is_empty() {
+            let charset: String = ctx.page.charset.chars()
+                .filter(|&c| c != '\r' && c != '\n')
+                .collect();
+            html(&format!(
+                "Content-Type: {}; charset={}\n",
+                mimetype, charset
+            ));
+        } else {
+            html(&format!("Content-Type: {}\n", mimetype));
+        }
     }
 
     if ctx.page.size > 0 {
@@ -120,7 +128,15 @@ pub fn print_http_headers(ctx: &CgitContext) {
     html(&format!("Expires: {}\n", http_date(ctx.page.expires)));
 
     if let Some(ref etag) = ctx.page.etag {
-        html(&format!("ETag: \"{}\"\n", etag));
+        let sanitized: String = etag.chars()
+            .filter(|&c| c != '\r' && c != '\n' && c != '"')
+            .collect();
+        html(&format!("ETag: \"{}\"\n", sanitized));
+    }
+
+    for hdr in &ctx.page.extra_headers {
+        html(hdr);
+        html("\n");
     }
 
     html("\n");
@@ -154,10 +170,9 @@ pub fn print_docstart(ctx: &CgitContext) {
         CGIT_VERSION
     ));
     if !ctx.cfg.robots.is_empty() {
-        html(&format!(
-            "<meta name='robots' content='{}'/>\n",
-            ctx.cfg.robots
-        ));
+        html("<meta name='robots' content='");
+        html_attr(&ctx.cfg.robots);
+        html("'/>\n");
     }
 
     if !ctx.cfg.css.is_empty() {

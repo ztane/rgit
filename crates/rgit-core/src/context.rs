@@ -281,6 +281,7 @@ pub struct CgitPage {
     pub title: Option<String>,
     pub status: Option<u16>,
     pub statusmsg: Option<String>,
+    pub extra_headers: Vec<String>,
 }
 
 impl Default for CgitPage {
@@ -300,6 +301,7 @@ impl Default for CgitPage {
             title: None,
             status: None,
             statusmsg: None,
+            extra_headers: Vec::new(),
         }
     }
 }

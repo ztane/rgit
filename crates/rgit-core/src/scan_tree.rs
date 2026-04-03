@@ -264,7 +264,9 @@ fn read_git_config(config_path: &str, repo: &mut CgitRepo, cfg: &crate::context:
                 "homepage" | "gitweb.homepage" => { repo.homepage = Some(value.to_string()); }
                 _ => {
                     if let Some(cgit_key) = key.strip_prefix("cgit.") {
-                        crate::config::apply_repo_config_standalone(repo, cgit_key, value, cfg);
+                        if cgit_key != "extra-head-content" {
+                            crate::config::apply_repo_config_standalone(repo, cgit_key, value, cfg);
+                        }
                     }
                 }
             }

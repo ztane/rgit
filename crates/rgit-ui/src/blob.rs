@@ -62,7 +62,8 @@ pub fn print_blob(ctx: &mut CgitContext) {
     ctx.page.filename = Some(filename.to_string());
 
     if ctx.cfg.enable_html_serving == 0 {
-        // Security headers
+        ctx.page.extra_headers.push("X-Content-Type-Options: nosniff".to_string());
+        ctx.page.extra_headers.push("Content-Security-Policy: default-src 'none'".to_string());
     }
 
     print_http_headers(ctx);

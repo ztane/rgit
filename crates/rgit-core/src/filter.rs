@@ -58,7 +58,10 @@ fn run_lua_filter(script: &str, args: &[&str], input: &[u8]) {
 }
 
 fn run_lua_filter_inner(script: &str, args: &[&str], input: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
-    let lua = mlua::Lua::new();
+    let lua = mlua::Lua::new_with(
+        mlua::StdLib::STRING | mlua::StdLib::TABLE | mlua::StdLib::MATH | mlua::StdLib::UTF8,
+        mlua::LuaOptions::default(),
+    )?;
 
     // Register html functions that write to HtmlOutput
     let html_fn = lua.create_function(|_, s: String| {

@@ -80,12 +80,12 @@ fn print_blob_plain(ctx: &mut CgitContext, path: &str, data: &[u8]) {
         }
     }
 
-    print_http_headers(ctx);
-
     if ctx.cfg.enable_html_serving == 0 {
-        html("X-Content-Type-Options: nosniff\n");
-        html("Content-Security-Policy: default-src 'none'\n");
+        ctx.page.extra_headers.push("X-Content-Type-Options: nosniff".to_string());
+        ctx.page.extra_headers.push("Content-Security-Policy: default-src 'none'".to_string());
     }
+
+    print_http_headers(ctx);
 
     html_raw(data);
 }

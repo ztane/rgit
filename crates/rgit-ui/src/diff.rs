@@ -73,10 +73,10 @@ fn print_diffstat(ctx: &CgitContext, diff: &git::diff::DiffResult, rev: &str) {
             _ => {}
         }
         if file.status == 'A' {
-            html(&file.new_mode);
+            html_txt(&file.new_mode);
         }
         if file.status == 'D' {
-            html(&file.old_mode);
+            html_txt(&file.old_mode);
         }
         html("</td>");
         html(&format!("<td class='{}'>", class));

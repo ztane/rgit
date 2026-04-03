@@ -94,6 +94,16 @@ fn main() {
         }
     }
 
+    // Deny access if auth-filter is configured but not implemented
+    if ctx.cfg.auth_filter.is_some() {
+        ctx.env.authenticated = false;
+        shared::print_error_page(
+            &mut ctx, 403, "Forbidden",
+            "auth-filter is configured but not implemented in this build",
+        );
+        return;
+    }
+
     // TTL calculation
     let ttl = calc_ttl(&ctx);
     if ttl < 0 {
