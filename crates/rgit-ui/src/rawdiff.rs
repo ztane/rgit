@@ -2,7 +2,6 @@ use rgit_core::context::CgitContext;
 use rgit_core::html::html_raw;
 use rgit_core::git;
 use crate::shared::*;
-use std::process::Command;
 
 /// Print the rawdiff page (plain text diff output).
 pub fn print_rawdiff(ctx: &mut CgitContext) {
@@ -45,8 +44,7 @@ pub fn print_rawdiff(ctx: &mut CgitContext) {
 
     if let Some(ref old) = old_oid {
         // Normal diff between two commits
-        let output = Command::new("git")
-            .arg("--git-dir").arg(&repo_path)
+        let output = git::git_command(&repo_path)
             .arg("diff")
             .arg(&format!("{}..{}", old, new_oid))
             .output();
@@ -55,8 +53,7 @@ pub fn print_rawdiff(ctx: &mut CgitContext) {
         }
     } else {
         // Root commit: use diff-tree
-        let output = Command::new("git")
-            .arg("--git-dir").arg(&repo_path)
+        let output = git::git_command(&repo_path)
             .arg("diff-tree")
             .arg("-p")
             .arg("--no-commit-id")

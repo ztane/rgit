@@ -1,5 +1,6 @@
 use rgit_core::context::CgitContext;
 use rgit_core::html::html_raw;
+use rgit_core::git;
 use rgit_core::snapshot::SNAPSHOT_FORMATS;
 use crate::shared::*;
 use std::process::{Command, Stdio};
@@ -101,8 +102,7 @@ fn get_ref_from_filename(repo_path: &str, filename: &str, suffix: &str) -> Optio
 
 /// Check if a revision exists in the repo.
 fn rev_exists(repo_path: &str, rev: &str) -> bool {
-    Command::new("git")
-        .arg("--git-dir").arg(repo_path)
+    git::git_command(repo_path)
         .arg("rev-parse")
         .arg("--verify")
         .arg(rev)
@@ -117,8 +117,7 @@ fn rev_exists(repo_path: &str, rev: &str) -> bool {
 fn write_archive(repo_path: &str, rev: &str, prefix: &str, suffix: &str) {
     match suffix {
         ".zip" => {
-            let output = Command::new("git")
-                .arg("--git-dir").arg(repo_path)
+            let output = git::git_command(repo_path)
                 .arg("archive")
                 .arg("--format=zip")
                 .arg(&format!("--prefix={}/", prefix))
@@ -129,8 +128,7 @@ fn write_archive(repo_path: &str, rev: &str, prefix: &str, suffix: &str) {
             }
         }
         ".tar" => {
-            let output = Command::new("git")
-                .arg("--git-dir").arg(repo_path)
+            let output = git::git_command(repo_path)
                 .arg("archive")
                 .arg("--format=tar")
                 .arg(&format!("--prefix={}/", prefix))
@@ -150,8 +148,7 @@ fn write_archive(repo_path: &str, rev: &str, prefix: &str, suffix: &str) {
                 _ => return,
             };
 
-            let archive = Command::new("git")
-                .arg("--git-dir").arg(repo_path)
+            let archive = git::git_command(repo_path)
                 .arg("archive")
                 .arg("--format=tar")
                 .arg(&format!("--prefix={}/", prefix))

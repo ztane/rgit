@@ -1,5 +1,3 @@
-use std::process::Command;
-
 /// A file changed in a commit.
 #[derive(Clone, Debug)]
 pub struct DiffFile {
@@ -29,8 +27,7 @@ pub struct DiffResult {
 /// Get the list of changed files between two commits (diffstat).
 /// If old_rev is None, shows changes from the empty tree (root commit).
 pub fn diff_stat(repo_path: &str, new_rev: &str, old_rev: Option<&str>) -> DiffResult {
-    let mut cmd = Command::new("git");
-    cmd.arg("--git-dir").arg(repo_path);
+    let mut cmd = super::git_command(repo_path);
     cmd.arg("diff-tree");
     cmd.arg("-r");
     cmd.arg("--numstat");
@@ -131,8 +128,7 @@ fn parse_diff_output(output: &str) -> DiffResult {
 /// Generate a unified diff for a commit.
 /// Returns the raw diff output as a string.
 pub fn unified_diff(repo_path: &str, new_rev: &str, old_rev: Option<&str>, path: Option<&str>) -> String {
-    let mut cmd = Command::new("git");
-    cmd.arg("--git-dir").arg(repo_path);
+    let mut cmd = super::git_command(repo_path);
     cmd.arg("diff-tree");
     cmd.arg("-p");
 

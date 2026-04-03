@@ -2,7 +2,6 @@ use rgit_core::context::CgitContext;
 use rgit_core::html::html_raw;
 use rgit_core::git;
 use crate::shared::*;
-use std::process::Command;
 
 const CGIT_VERSION: &str = "v1.3";
 
@@ -54,8 +53,7 @@ pub fn print_patch(ctx: &mut CgitContext) {
     print_http_headers(ctx);
 
     // Use git format-patch to generate the output
-    let mut cmd = Command::new("git");
-    cmd.arg("--git-dir").arg(&repo_path);
+    let mut cmd = git::git_command(&repo_path);
     cmd.arg("format-patch");
     cmd.arg("--stdout");
     cmd.arg("-N");
