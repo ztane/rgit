@@ -152,6 +152,37 @@ pub fn unified_diff(repo_path: &str, new_rev: &str, old_rev: Option<&str>, path:
     }
 }
 
+/// Lightweight diffstat: returns (file_count, lines_added, lines_removed) for a commit.
+/// Used by log and summary pages for filecount/linecount columns.
+pub fn commit_stats(repo_path: &str, commit_oid: &str) -> (usize, usize, usize) {
+    let mut cmd = super::git_command(repo_path);
+    cmd.arg("diff-tree");
+    cmd.arg("--numstat");
+    cmd.arg("--root"); // handles root commits too
+    cmd.arg(commit_oid);
+
+    let output = cmd.output().ok();
+    let output = match output {
+        Some(o) if o.status.success() => String::from_utf8_lossy(&o.stdout).into_owned(),
+        _ => return (0, 0, 0),
+    };
+
+    let mut files = 0;
+    let mut added = 0;
+    let mut removed = 0;
+    for line in output.lines() {
+        let parts: Vec<&str> = line.split('\t').collect();
+        if parts.len() >= 3 {
+            files += 1;
+            if parts[0] != "-" {
+                added += parts[0].parse::<usize>().unwrap_or(0);
+                removed += parts[1].parse::<usize>().unwrap_or(0);
+            }
+        }
+    }
+    (files, added, removed)
+}
+
 /// Resolve a revision (ref name or OID prefix) to its full OID using gix.
 pub fn resolve_rev(repo: &gix::Repository, rev: &str) -> Option<String> {
     // Try as full hex OID first

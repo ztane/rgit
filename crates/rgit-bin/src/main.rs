@@ -25,6 +25,7 @@ fn main() {
 
     let mut ctx = CgitContext::new();
     ctx.prepare_from_env();
+    let mut scan = false;
 
     // Parse command-line arguments (matching C cgit's cgit_parse_args)
     for arg in &args[1..] {
@@ -46,7 +47,17 @@ fn main() {
             ctx.qry.has_oid = true;
         } else if let Some(val) = arg.strip_prefix("--ofs=") {
             ctx.qry.ofs = val.parse().unwrap_or(0);
+        } else if let Some(val) = arg.strip_prefix("--scan-tree=")
+            .or_else(|| arg.strip_prefix("--scan-path="))
+        {
+            ctx.cfg.snapshots = 0xFF;
+            scan = true;
+            rgit_core::scan_tree::scan_tree(&mut ctx, val);
         }
+    }
+    if scan {
+        print_scan_result(&ctx);
+        std::process::exit(0);
     }
 
     // Parse config file
@@ -229,5 +240,28 @@ fn process_request(ctx: &mut CgitContext) {
                 &format!("Page '{}' not yet implemented", resolved_page),
             );
         }
+    }
+}
+
+/// Print discovered repos as cgitrc format (for --scan-path/--scan-tree).
+fn print_scan_result(ctx: &CgitContext) {
+    for repo in &ctx.repolist.repos {
+        println!("repo.url={}", repo.url);
+        if let Some(ref path) = repo.path {
+            println!("repo.path={}", path);
+        }
+        if repo.owner.is_some() {
+            println!("repo.owner={}", repo.owner.as_deref().unwrap_or(""));
+        }
+        if repo.desc != "[no description]" {
+            println!("repo.desc={}", repo.desc);
+        }
+        if !repo.section.is_empty() {
+            println!("repo.section={}", repo.section);
+        }
+        if repo.defbranch.is_some() {
+            println!("repo.defbranch={}", repo.defbranch.as_deref().unwrap_or(""));
+        }
+        println!();
     }
 }

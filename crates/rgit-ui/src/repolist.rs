@@ -128,7 +128,11 @@ pub fn print_repolist(ctx: &mut CgitContext) {
             html("</td><td>");
         }
 
-        // Idle column (empty for now, will be populated in Phase 2)
+        // Idle column
+        let mtime = rgit_core::repo::get_repo_modtime(&mut ctx.repolist.repos[i], &ctx.cfg.agefile);
+        if mtime > 0 {
+            print_age(mtime, 0, -1);
+        }
         html("</td>");
 
         if enable_index_links != 0 {
@@ -239,6 +243,16 @@ fn sort_repolist(ctx: &mut CgitContext, field: &str) {
                 result
             }
         }),
+        "idle" => {
+            let agefile = ctx.cfg.agefile.clone();
+            ctx.repolist.repos.sort_by(|a, b| {
+                let mut a = a.clone();
+                let mut b = b.clone();
+                let ma = rgit_core::repo::get_repo_modtime(&mut a, &agefile);
+                let mb = rgit_core::repo::get_repo_modtime(&mut b, &agefile);
+                mb.cmp(&ma)
+            });
+        }
         _ => {}
     }
 }

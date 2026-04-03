@@ -106,6 +106,52 @@ impl CgitRepoList {
     }
 }
 
+/// Get the mtime for a repo (cached). Uses ref file stat as fallback.
+pub fn get_repo_modtime(repo: &mut CgitRepo, agefile: &str) -> i64 {
+    if repo.mtime != -1 {
+        return repo.mtime;
+    }
+    let Some(ref path) = repo.path else { return 0 };
+
+    // Try agefile first
+    if !agefile.is_empty() {
+        let agefile_path = std::path::Path::new(path).join(agefile);
+        if let Ok(contents) = std::fs::read_to_string(&agefile_path) {
+            if let Ok(ts) = contents.trim().parse::<i64>() {
+                if ts > 0 {
+                    repo.mtime = ts;
+                    return ts;
+                }
+            }
+        }
+    }
+
+    // Try stat on refs/heads/{defbranch} or refs/heads/master
+    let defbranch = repo.defbranch.as_deref().unwrap_or("master");
+    let ref_path = std::path::Path::new(path).join("refs/heads").join(defbranch);
+    if let Ok(meta) = std::fs::metadata(&ref_path) {
+        if let Ok(modified) = meta.modified() {
+            if let Ok(duration) = modified.duration_since(std::time::UNIX_EPOCH) {
+                repo.mtime = duration.as_secs() as i64;
+                return repo.mtime;
+            }
+        }
+    }
+
+    // Try packed-refs
+    let packed_path = std::path::Path::new(path).join("packed-refs");
+    if let Ok(meta) = std::fs::metadata(&packed_path) {
+        if let Ok(modified) = meta.modified() {
+            if let Ok(duration) = modified.duration_since(std::time::UNIX_EPOCH) {
+                repo.mtime = duration.as_secs() as i64;
+                return repo.mtime;
+            }
+        }
+    }
+
+    0
+}
+
 pub fn trim_end(s: &str, c: char) -> String {
     let trimmed = s.trim_end_matches(c);
     if trimmed.is_empty() {

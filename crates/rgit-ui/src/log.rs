@@ -92,11 +92,16 @@ pub fn print_log(ctx: &mut CgitContext) {
         html("</td><td>");
         html_txt(&commit.author);
 
-        if repo.enable_log_filecount != 0 || ctx.cfg.enable_log_filecount != 0 {
-            html("</td><td>");
-        }
-        if repo.enable_log_linecount != 0 || ctx.cfg.enable_log_linecount != 0 {
-            html("</td><td>");
+        let show_filecount = repo.enable_log_filecount != 0 || ctx.cfg.enable_log_filecount != 0;
+        let show_linecount = repo.enable_log_linecount != 0 || ctx.cfg.enable_log_linecount != 0;
+        if show_filecount || show_linecount {
+            let (files, added, removed) = git::diff::commit_stats(&repo_path, &commit.oid);
+            if show_filecount {
+                html(&format!("</td><td>{}", files));
+            }
+            if show_linecount {
+                html(&format!("</td><td><span class='deletions'>-{}</span>/<span class='insertions'>+{}</span>", removed, added));
+            }
         }
 
         html("</td></tr>\n");

@@ -146,6 +146,15 @@ pub fn apply_config(ctx: &mut CgitContext, name: &str, value: &str) {
         "side-by-side-diffs" => {
             ctx.cfg.difftype = if value.parse::<i32>().unwrap_or(0) != 0 { 1 } else { 0 };
         }
+        "project-list" => ctx.cfg.project_list = Some(expand_macros(value)),
+        "scan-path" => {
+            let expanded = expand_macros(value);
+            if let Some(ref project_list) = ctx.cfg.project_list.clone() {
+                crate::scan_tree::scan_projects(ctx, &expanded, project_list);
+            } else {
+                crate::scan_tree::scan_tree(ctx, &expanded);
+            }
+        }
         "include" => {
             let expanded = expand_macros(value);
             parse_configfile(&expanded, &mut |n, v| apply_config(ctx, n, v));
@@ -157,6 +166,18 @@ pub fn apply_config(ctx: &mut CgitContext, name: &str, value: &str) {
             }
         }
     }
+}
+
+/// Apply a repo config setting from scan-tree's per-repo cgitrc (needs ctx for cfg reference).
+pub fn apply_repo_config_public(ctx: &mut CgitContext, name: &str, value: &str) {
+    if let Some(repo_idx) = ctx.repo {
+        apply_repo_config(&mut ctx.repolist.repos[repo_idx], name, value, &ctx.cfg);
+    }
+}
+
+/// Apply a repo config setting with standalone repo reference (for git config parsing).
+pub fn apply_repo_config_standalone(repo: &mut CgitRepo, name: &str, value: &str, cfg: &CgitConfig) {
+    apply_repo_config(repo, name, value, cfg);
 }
 
 fn apply_repo_config(repo: &mut CgitRepo, name: &str, value: &str, cfg: &CgitConfig) {

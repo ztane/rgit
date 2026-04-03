@@ -11,3 +11,4 @@ pub mod macros;
 pub mod git;
 pub mod cache;
 pub mod filter;
+pub mod scan_tree;

@@ -59,7 +59,7 @@ pub fn print_summary(ctx: &mut CgitContext) {
     // Log
     if ctx.cfg.summary_log > 0 {
         html(&format!("<tr class='nohover'><td colspan='{}'>&nbsp;</td></tr>", columns));
-        print_summary_log(ctx, &commits, ctx.cfg.summary_log as usize, columns);
+        print_summary_log(ctx, &commits, ctx.cfg.summary_log as usize, columns, &repo_path);
     }
 
     // Clone URLs
@@ -161,7 +161,10 @@ fn print_tags(ctx: &CgitContext, tags: &[TagInfo], max_count: i32, _columns: i32
         html("<tr><td>");
         tag_link(ctx, &tag.name, None, None, &tag.name);
         html("</td><td>");
-        // TODO: snapshot links when snapshots enabled
+        let repo_snapshots = ctx.repolist.repos[ctx.repo.unwrap()].snapshots;
+        if repo_snapshots != 0 {
+            print_snapshot_links(ctx, &tag.name);
+        }
         html("</td><td>");
         if let Some(tagger) = &tag.tagger {
             html_txt(tagger);
@@ -184,7 +187,7 @@ fn print_tags(ctx: &CgitContext, tags: &[TagInfo], max_count: i32, _columns: i32
     }
 }
 
-fn print_summary_log(ctx: &CgitContext, commits: &[CommitInfo], count: usize, columns: i32) {
+fn print_summary_log(ctx: &CgitContext, commits: &[CommitInfo], count: usize, columns: i32, repo_path: &str) {
     html("<tr class='nohover'>");
     html("<th class='left'>Age</th>");
     html("<th class='left'>Commit message</th>");
@@ -209,11 +212,16 @@ fn print_summary_log(ctx: &CgitContext, commits: &[CommitInfo], count: usize, co
         html("</td><td>");
         html_txt(&commit.author);
 
-        if repo.enable_log_filecount != 0 || ctx.cfg.enable_log_filecount != 0 {
-            html("</td><td>");
-        }
-        if repo.enable_log_linecount != 0 || ctx.cfg.enable_log_linecount != 0 {
-            html("</td><td>");
+        let show_filecount = repo.enable_log_filecount != 0 || ctx.cfg.enable_log_filecount != 0;
+        let show_linecount = repo.enable_log_linecount != 0 || ctx.cfg.enable_log_linecount != 0;
+        if show_filecount || show_linecount {
+            let (files, added, removed) = git::diff::commit_stats(repo_path, &commit.oid);
+            if show_filecount {
+                html(&format!("</td><td>{}", files));
+            }
+            if show_linecount {
+                html(&format!("</td><td><span class='deletions'>-{}</span>/<span class='insertions'>+{}</span>", removed, added));
+            }
         }
 
         html("</td></tr>\n");
@@ -281,4 +289,23 @@ fn get_clone_urls(ctx: &CgitContext, repo: &rgit_core::repo::CgitRepo) -> Vec<St
     }
 
     urls
+}
+
+fn print_snapshot_links(ctx: &CgitContext, tag_name: &str) {
+    use rgit_core::snapshot::SNAPSHOT_FORMATS;
+    let repo_idx = ctx.repo.unwrap();
+    let repo_snapshots = ctx.repolist.repos[repo_idx].snapshots;
+
+    let mut first = true;
+    for fmt in SNAPSHOT_FORMATS {
+        if repo_snapshots & (fmt.bit as i32) == 0 {
+            continue;
+        }
+        if !first {
+            html(" ");
+        }
+        first = false;
+        let filename = format!("{}{}", tag_name, fmt.suffix);
+        reporevlink(ctx, "snapshot", &fmt.suffix[1..], None, None, None, None, Some(&filename));
+    }
 }
